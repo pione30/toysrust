@@ -16,6 +16,13 @@ pub enum Expression {
     IntegerLiteral {
         value: i64,
     },
+    Identifier {
+        name: String,
+    },
+    Assignment {
+        name: String,
+        expression: Box<Expression>,
+    },
 }
 
 pub fn add(lhs: &Expression, rhs: &Expression) -> Expression {
@@ -52,4 +59,15 @@ pub fn divide(lhs: &Expression, rhs: &Expression) -> Expression {
 
 pub fn integer(value: i64) -> Expression {
     Expression::IntegerLiteral { value }
+}
+
+pub fn identifier(name: &str) -> Expression {
+    Expression::Identifier { name: name.into() }
+}
+
+pub fn assignment(name: &str, expression: &Expression) -> Expression {
+    Expression::Assignment {
+        name: name.into(),
+        expression: Box::new(expression.clone()),
+    }
 }
