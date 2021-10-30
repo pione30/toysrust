@@ -1,3 +1,6 @@
+mod ast;
+mod interpreter;
+
 #[cfg(test)]
 mod tests {
     #[test]
