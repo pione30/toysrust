@@ -36,6 +36,13 @@ impl Interpreter {
                 self.environment.insert(name.clone(), value);
                 value
             }
+            ast::Expression::BlockExpression { elements } => unimplemented!(),
+            ast::Expression::WhileExpression { condition, body } => unimplemented!(),
+            ast::Expression::IfExpression {
+                condition,
+                then_clause,
+                else_clause,
+            } => unimplemented!(),
         }
     }
 }
