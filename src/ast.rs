@@ -40,32 +40,32 @@ pub enum Expression {
 pub fn add(lhs: &Expression, rhs: &Expression) -> Expression {
     Expression::Binary {
         operator: Operator::Add,
-        lhs: Box::new(lhs.clone()),
-        rhs: Box::new(rhs.clone()),
+        lhs: Box::new(lhs.to_owned()),
+        rhs: Box::new(rhs.to_owned()),
     }
 }
 
 pub fn subtract(lhs: &Expression, rhs: &Expression) -> Expression {
     Expression::Binary {
         operator: Operator::Subtract,
-        lhs: Box::new(lhs.clone()),
-        rhs: Box::new(rhs.clone()),
+        lhs: Box::new(lhs.to_owned()),
+        rhs: Box::new(rhs.to_owned()),
     }
 }
 
 pub fn multiply(lhs: &Expression, rhs: &Expression) -> Expression {
     Expression::Binary {
         operator: Operator::Multiply,
-        lhs: Box::new(lhs.clone()),
-        rhs: Box::new(rhs.clone()),
+        lhs: Box::new(lhs.to_owned()),
+        rhs: Box::new(rhs.to_owned()),
     }
 }
 
 pub fn divide(lhs: &Expression, rhs: &Expression) -> Expression {
     Expression::Binary {
         operator: Operator::Divide,
-        lhs: Box::new(lhs.clone()),
-        rhs: Box::new(rhs.clone()),
+        lhs: Box::new(lhs.to_owned()),
+        rhs: Box::new(rhs.to_owned()),
     }
 }
 
@@ -80,7 +80,7 @@ pub fn identifier(name: &str) -> Expression {
 pub fn assignment(name: &str, expression: &Expression) -> Expression {
     Expression::Assignment {
         name: name.into(),
-        expression: Box::new(expression.clone()),
+        expression: Box::new(expression.to_owned()),
     }
 }
 
