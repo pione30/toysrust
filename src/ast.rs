@@ -8,7 +8,7 @@ pub enum Operator {
 
 #[derive(Clone)]
 pub enum Expression {
-    BinaryExpression {
+    Binary {
         operator: Operator,
         lhs: Box<Expression>,
         rhs: Box<Expression>,
@@ -23,14 +23,14 @@ pub enum Expression {
         name: String,
         expression: Box<Expression>,
     },
-    BlockExpression {
+    Block {
         elements: Vec<Expression>,
     },
-    WhileExpression {
+    While {
         condition: Box<Expression>,
         body: Box<Expression>,
     },
-    IfExpression {
+    If {
         condition: Box<Expression>,
         then_clause: Box<Expression>,
         else_clause: Option<Box<Expression>>,
@@ -38,7 +38,7 @@ pub enum Expression {
 }
 
 pub fn add(lhs: &Expression, rhs: &Expression) -> Expression {
-    Expression::BinaryExpression {
+    Expression::Binary {
         operator: Operator::Add,
         lhs: Box::new(lhs.clone()),
         rhs: Box::new(rhs.clone()),
@@ -46,7 +46,7 @@ pub fn add(lhs: &Expression, rhs: &Expression) -> Expression {
 }
 
 pub fn subtract(lhs: &Expression, rhs: &Expression) -> Expression {
-    Expression::BinaryExpression {
+    Expression::Binary {
         operator: Operator::Subtract,
         lhs: Box::new(lhs.clone()),
         rhs: Box::new(rhs.clone()),
@@ -54,7 +54,7 @@ pub fn subtract(lhs: &Expression, rhs: &Expression) -> Expression {
 }
 
 pub fn multiply(lhs: &Expression, rhs: &Expression) -> Expression {
-    Expression::BinaryExpression {
+    Expression::Binary {
         operator: Operator::Multiply,
         lhs: Box::new(lhs.clone()),
         rhs: Box::new(rhs.clone()),
@@ -62,7 +62,7 @@ pub fn multiply(lhs: &Expression, rhs: &Expression) -> Expression {
 }
 
 pub fn divide(lhs: &Expression, rhs: &Expression) -> Expression {
-    Expression::BinaryExpression {
+    Expression::Binary {
         operator: Operator::Divide,
         lhs: Box::new(lhs.clone()),
         rhs: Box::new(rhs.clone()),
@@ -85,13 +85,13 @@ pub fn assignment(name: &str, expression: &Expression) -> Expression {
 }
 
 pub fn block(elements: &[Expression]) -> Expression {
-    Expression::BlockExpression {
+    Expression::Block {
         elements: elements.to_vec(),
     }
 }
 
 pub fn ast_while(condition: &Expression, body: &Expression) -> Expression {
-    Expression::WhileExpression {
+    Expression::While {
         condition: Box::new(condition.to_owned()),
         body: Box::new(body.to_owned()),
     }
@@ -102,7 +102,7 @@ pub fn ast_if(
     then_clause: &Expression,
     else_clause: &Option<Expression>,
 ) -> Expression {
-    Expression::IfExpression {
+    Expression::If {
         condition: Box::new(condition.to_owned()),
         then_clause: Box::new(then_clause.to_owned()),
         else_clause: else_clause

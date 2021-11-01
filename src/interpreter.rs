@@ -15,7 +15,7 @@ impl Interpreter {
 
     pub fn interpret(&mut self, expression: &ast::Expression) -> i64 {
         match expression {
-            ast::Expression::BinaryExpression { operator, lhs, rhs } => {
+            ast::Expression::Binary { operator, lhs, rhs } => {
                 let lhs = self.interpret(lhs);
                 let rhs = self.interpret(rhs);
 
@@ -36,9 +36,9 @@ impl Interpreter {
                 self.environment.insert(name.clone(), value);
                 value
             }
-            ast::Expression::BlockExpression { elements } => unimplemented!(),
-            ast::Expression::WhileExpression { condition, body } => unimplemented!(),
-            ast::Expression::IfExpression {
+            ast::Expression::Block { elements } => unimplemented!(),
+            ast::Expression::While { condition, body } => unimplemented!(),
+            ast::Expression::If {
                 condition,
                 then_clause,
                 else_clause,
