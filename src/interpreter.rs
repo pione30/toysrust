@@ -24,6 +24,48 @@ impl Interpreter {
                     ast::Operator::Subtract => lhs - rhs,
                     ast::Operator::Multiply => lhs * rhs,
                     ast::Operator::Divide => lhs / rhs,
+                    ast::Operator::LessThan => {
+                        if lhs < rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                    ast::Operator::LessOrEqual => {
+                        if lhs <= rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                    ast::Operator::GreaterThan => {
+                        if lhs > rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                    ast::Operator::GreaterOrEqual => {
+                        if lhs >= rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                    ast::Operator::EqualEqual => {
+                        if lhs == rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
+                    ast::Operator::NotEqual => {
+                        if lhs != rhs {
+                            1
+                        } else {
+                            0
+                        }
+                    }
                 }
             }
             ast::Expression::IntegerLiteral { value } => *value,
@@ -42,7 +84,17 @@ impl Interpreter {
                 condition,
                 then_clause,
                 else_clause,
-            } => unimplemented!(),
+            } => {
+                let condition = self.interpret(condition);
+                if condition != 0 {
+                    self.interpret(then_clause)
+                } else {
+                    else_clause
+                        .as_ref()
+                        .map(|expression| self.interpret(expression))
+                        .unwrap_or(1)
+                }
+            }
         }
     }
 }

@@ -4,6 +4,12 @@ pub enum Operator {
     Subtract,
     Multiply,
     Divide,
+    LessThan,
+    LessOrEqual,
+    GreaterThan,
+    GreaterOrEqual,
+    EqualEqual,
+    NotEqual,
 }
 
 #[derive(Clone)]
