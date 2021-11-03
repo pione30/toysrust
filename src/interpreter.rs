@@ -78,7 +78,9 @@ impl Interpreter {
                 self.environment.insert(name.clone(), value);
                 value
             }
-            ast::Expression::Block { elements } => unimplemented!(),
+            ast::Expression::Block { elements } => elements
+                .iter()
+                .fold(0, |_, element| self.interpret(element)),
             ast::Expression::While { condition, body } => {
                 loop {
                     let condition = self.interpret(condition);
@@ -182,5 +184,15 @@ mod tests {
 
         let expression = ast::ast_if(&condition, &ast::integer(42), &Some(ast::integer(53)));
         assert_eq!(interpreter.interpret(&expression), 53);
+    }
+
+    #[test]
+    fn block() {
+        let mut interpreter = Interpreter::new();
+
+        let elements = [ast::integer(1), ast::integer(2), ast::integer(3)];
+
+        let expression = ast::block(&elements);
+        assert_eq!(interpreter.interpret(&expression), 3);
     }
 }
