@@ -79,7 +79,18 @@ impl Interpreter {
                 value
             }
             ast::Expression::Block { elements } => unimplemented!(),
-            ast::Expression::While { condition, body } => unimplemented!(),
+            ast::Expression::While { condition, body } => {
+                loop {
+                    let condition = self.interpret(condition);
+                    if condition != 0 {
+                        self.interpret(body);
+                    } else {
+                        break;
+                    }
+                }
+
+                1
+            }
             ast::Expression::If {
                 condition,
                 then_clause,
