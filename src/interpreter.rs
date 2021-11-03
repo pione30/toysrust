@@ -148,4 +148,28 @@ mod tests {
         let identifier = ast::identifier("foo");
         assert_eq!(interpreter.interpret(&identifier), 42);
     }
+
+    #[test]
+    fn if_then() {
+        let mut interpreter = Interpreter::new();
+
+        let condition = ast::binary(&ast::Operator::LessThan, &ast::integer(2), &ast::integer(4));
+
+        let expression = ast::ast_if(&condition, &ast::integer(42), &None);
+        assert_eq!(interpreter.interpret(&expression), 42);
+    }
+
+    #[test]
+    fn if_then_else() {
+        let mut interpreter = Interpreter::new();
+
+        let condition = ast::binary(
+            &ast::Operator::GreaterThan,
+            &ast::integer(2),
+            &ast::integer(4),
+        );
+
+        let expression = ast::ast_if(&condition, &ast::integer(42), &Some(ast::integer(53)));
+        assert_eq!(interpreter.interpret(&expression), 53);
+    }
 }

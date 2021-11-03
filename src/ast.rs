@@ -75,6 +75,14 @@ pub fn divide(lhs: &Expression, rhs: &Expression) -> Expression {
     }
 }
 
+pub fn binary(operator: &Operator, lhs: &Expression, rhs: &Expression) -> Expression {
+    Expression::Binary {
+        operator: operator.to_owned(),
+        lhs: Box::new(lhs.to_owned()),
+        rhs: Box::new(rhs.to_owned()),
+    }
+}
+
 pub fn integer(value: i64) -> Expression {
     Expression::IntegerLiteral { value }
 }
