@@ -3,13 +3,15 @@ use std::collections::HashMap;
 use crate::ast;
 
 pub struct Interpreter {
-    environment: HashMap<String, i64>,
+    variable_environment: HashMap<String, i64>,
+    function_environment: HashMap<String, ast::Function>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            environment: HashMap::new(),
+            variable_environment: HashMap::new(),
+            function_environment: HashMap::new(),
         }
     }
 
@@ -70,12 +72,12 @@ impl Interpreter {
             }
             ast::Expression::IntegerLiteral { value } => *value,
             ast::Expression::Identifier { name } => *self
-                .environment
+                .variable_environment
                 .get(name)
                 .unwrap_or_else(|| panic!("variable {} to exist in the environment", name)),
             ast::Expression::Assignment { name, expression } => {
                 let value = self.interpret(expression);
-                self.environment.insert(name.clone(), value);
+                self.variable_environment.insert(name.clone(), value);
                 value
             }
             ast::Expression::Block { elements } => elements
@@ -108,7 +110,27 @@ impl Interpreter {
                         .unwrap_or(1)
                 }
             }
+            ast::Expression::FunctionCall { name, args } => unimplemented!(),
         }
+    }
+
+    pub fn call_main(&mut self, program: ast::Program) -> Result<i64, Box<dyn std::error::Error>> {
+        for top_level in program.definitions {
+            match top_level {
+                ast::TopLevel::FunctionDefinition(function) => {
+                    self.function_environment
+                        .insert(function.name.clone(), function);
+                }
+            }
+        }
+
+        let main = self
+            .function_environment
+            .get("main")
+            .cloned()
+            .ok_or(std::env::VarError::NotPresent)?;
+
+        Ok(self.interpret(&main.body))
     }
 }
 

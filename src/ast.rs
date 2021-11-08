@@ -41,6 +41,25 @@ pub enum Expression {
         then_clause: Box<Expression>,
         else_clause: Option<Box<Expression>>,
     },
+    FunctionCall {
+        name: String,
+        args: Vec<Expression>,
+    },
+}
+
+#[derive(Clone)]
+pub struct Function {
+    pub name: String,
+    pub args: Vec<String>,
+    pub body: Expression,
+}
+
+pub enum TopLevel {
+    FunctionDefinition(Function),
+}
+
+pub struct Program {
+    pub definitions: Vec<TopLevel>,
 }
 
 pub fn add(lhs: &Expression, rhs: &Expression) -> Expression {
