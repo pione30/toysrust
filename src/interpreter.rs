@@ -5,6 +5,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum InterpreterError {
+    #[error("This program doesn't have main() function")]
+    MainNotPresent,
     #[error("Variable {0} is not present in this environment")]
     VariableNotPresent(String),
     #[error("`else_clause` should not be None when the `if` condition is not met")]
@@ -130,7 +132,7 @@ impl Interpreter {
         Ok(value)
     }
 
-    pub fn call_main(&mut self, program: ast::Program) -> Result<i64, Box<dyn std::error::Error>> {
+    pub fn call_main(&mut self, program: ast::Program) -> Result<i64, InterpreterError> {
         for top_level in program.definitions {
             match top_level {
                 ast::TopLevel::FunctionDefinition(function) => {
@@ -144,9 +146,9 @@ impl Interpreter {
             .function_environment
             .get("main")
             .cloned()
-            .ok_or(std::env::VarError::NotPresent)?;
+            .ok_or(InterpreterError::MainNotPresent)?;
 
-        Ok(self.interpret(&main.body))
+        self.interpret(&main.body)
     }
 }
 
