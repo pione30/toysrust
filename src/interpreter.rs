@@ -13,8 +13,11 @@ pub enum InterpreterError {
     VariableNotPresent(String),
     #[error("`else_clause` should not be None when the `if` condition is not met")]
     ElseClauseNoneUnderIfConditionNotMet,
+    #[error("Function {0} is not found")]
+    FunctionNotFound(String),
 }
 
+#[derive(Clone)]
 pub struct Interpreter {
     variable_environment: HashMap<String, i64>,
     function_environment: HashMap<String, ast::Function>,
@@ -134,7 +137,28 @@ impl Interpreter {
                     self.interpret(expression)?
                 }
             }
-            ast::Expression::FunctionCall { name, args } => unimplemented!(),
+            ast::Expression::FunctionCall { name, args } => {
+                let definition = self
+                    .function_environment
+                    .get(name)
+                    .ok_or_else(|| InterpreterError::FunctionNotFound(name.clone()))?;
+
+                let args_values = args.iter().map(|arg| self.interpret(arg));
+
+                let backup = self.variable_environment.clone();
+
+                // 関数呼び出し先では呼び出し元のローカル変数が見えないようにする
+                for (formal_param_name, actual_value) in definition.args.iter().zip(args_values) {
+                    self.variable_environment
+                        .insert(formal_param_name.clone(), actual_value?);
+                }
+                let value = self.interpret(&definition.body)?;
+
+                // 呼び出し先から返ったら変数環境も元に戻す
+                self.variable_environment = backup;
+
+                value
+            }
         };
 
         Ok(value)
