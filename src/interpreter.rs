@@ -1,6 +1,15 @@
 use std::collections::HashMap;
 
 use crate::ast;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum InterpreterError {
+    #[error("Variable {0} is not present in this environment")]
+    VariableNotPresent(String),
+    #[error("`else_clause` should not be None when the `if` condition is not met")]
+    ElseClauseNoneUnderIfConditionNotMet,
+}
 
 pub struct Interpreter {
     variable_environment: HashMap<String, i64>,
@@ -15,11 +24,11 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, expression: &ast::Expression) -> i64 {
-        match expression {
+    pub fn interpret(&mut self, expression: &ast::Expression) -> Result<i64, InterpreterError> {
+        let value = match expression {
             ast::Expression::Binary { operator, lhs, rhs } => {
-                let lhs = self.interpret(lhs);
-                let rhs = self.interpret(rhs);
+                let lhs = self.interpret(lhs)?;
+                let rhs = self.interpret(rhs)?;
 
                 match operator {
                     ast::Operator::Add => lhs + rhs,
@@ -74,20 +83,24 @@ impl Interpreter {
             ast::Expression::Identifier { name } => *self
                 .variable_environment
                 .get(name)
-                .unwrap_or_else(|| panic!("variable {} to exist in the environment", name)),
+                .ok_or_else(|| InterpreterError::VariableNotPresent(name.clone()))?,
             ast::Expression::Assignment { name, expression } => {
-                let value = self.interpret(expression);
+                let value = self.interpret(expression)?;
                 self.variable_environment.insert(name.clone(), value);
                 value
             }
-            ast::Expression::Block { elements } => elements
-                .iter()
-                .fold(0, |_, element| self.interpret(element)),
+            ast::Expression::Block { elements } => {
+                let mut value = 0;
+                for element in elements {
+                    value = self.interpret(element)?;
+                }
+                value
+            }
             ast::Expression::While { condition, body } => {
                 loop {
-                    let condition = self.interpret(condition);
+                    let condition = self.interpret(condition)?;
                     if condition != 0 {
-                        self.interpret(body);
+                        self.interpret(body)?;
                     } else {
                         break;
                     }
@@ -100,18 +113,21 @@ impl Interpreter {
                 then_clause,
                 else_clause,
             } => {
-                let condition = self.interpret(condition);
+                let condition = self.interpret(condition)?;
                 if condition != 0 {
-                    self.interpret(then_clause)
+                    self.interpret(then_clause)?
                 } else {
-                    else_clause
+                    let expression = else_clause
                         .as_ref()
-                        .map(|expression| self.interpret(expression))
-                        .unwrap_or(1)
+                        .ok_or(InterpreterError::ElseClauseNoneUnderIfConditionNotMet)?;
+
+                    self.interpret(expression)?
                 }
             }
             ast::Expression::FunctionCall { name, args } => unimplemented!(),
-        }
+        };
+
+        Ok(value)
     }
 
     pub fn call_main(&mut self, program: ast::Program) -> Result<i64, Box<dyn std::error::Error>> {
@@ -142,35 +158,35 @@ mod tests {
     fn test_10_plus_20_is_30() {
         let mut interpreter = Interpreter::new();
         let expression = ast::add(&ast::integer(10), &ast::integer(20));
-        assert_eq!(interpreter.interpret(&expression), 30);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 30);
     }
 
     #[test]
     fn test_30_minus_20_is_10() {
         let mut interpreter = Interpreter::new();
         let expression = ast::subtract(&ast::integer(30), &ast::integer(20));
-        assert_eq!(interpreter.interpret(&expression), 10);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 10);
     }
 
     #[test]
     fn test_10_multiplies_20_is_200() {
         let mut interpreter = Interpreter::new();
         let expression = ast::multiply(&ast::integer(10), &ast::integer(20));
-        assert_eq!(interpreter.interpret(&expression), 200);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 200);
     }
 
     #[test]
     fn test_200_divided_by_20_is_10() {
         let mut interpreter = Interpreter::new();
         let expression = ast::divide(&ast::integer(200), &ast::integer(20));
-        assert_eq!(interpreter.interpret(&expression), 10);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 10);
     }
 
     #[test]
     fn test_42_is_42() {
         let mut interpreter = Interpreter::new();
         let expression = ast::integer(42);
-        assert_eq!(interpreter.interpret(&expression), 42);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 42);
     }
 
     #[test]
@@ -178,10 +194,10 @@ mod tests {
         let mut interpreter = Interpreter::new();
 
         let assignment = ast::assignment("foo", &ast::integer(42));
-        assert_eq!(interpreter.interpret(&assignment), 42);
+        assert_eq!(interpreter.interpret(&assignment).unwrap(), 42);
 
         let identifier = ast::identifier("foo");
-        assert_eq!(interpreter.interpret(&identifier), 42);
+        assert_eq!(interpreter.interpret(&identifier).unwrap(), 42);
     }
 
     #[test]
@@ -191,7 +207,7 @@ mod tests {
         let condition = ast::binary(&ast::Operator::LessThan, &ast::integer(2), &ast::integer(4));
 
         let expression = ast::ast_if(&condition, &ast::integer(42), &None);
-        assert_eq!(interpreter.interpret(&expression), 42);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 42);
     }
 
     #[test]
@@ -205,7 +221,7 @@ mod tests {
         );
 
         let expression = ast::ast_if(&condition, &ast::integer(42), &Some(ast::integer(53)));
-        assert_eq!(interpreter.interpret(&expression), 53);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 53);
     }
 
     #[test]
@@ -215,6 +231,6 @@ mod tests {
         let elements = [ast::integer(1), ast::integer(2), ast::integer(3)];
 
         let expression = ast::block(&elements);
-        assert_eq!(interpreter.interpret(&expression), 3);
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 3);
     }
 }
