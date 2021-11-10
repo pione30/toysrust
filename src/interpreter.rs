@@ -7,6 +7,8 @@ use thiserror::Error;
 pub enum InterpreterError {
     #[error("This program doesn't have main() function")]
     MainNotPresent,
+    #[error("Zero is an invalid denominator")]
+    ZeroDivision,
     #[error("Variable {0} is not present in this environment")]
     VariableNotPresent(String),
     #[error("`else_clause` should not be None when the `if` condition is not met")]
@@ -36,7 +38,13 @@ impl Interpreter {
                     ast::Operator::Add => lhs + rhs,
                     ast::Operator::Subtract => lhs - rhs,
                     ast::Operator::Multiply => lhs * rhs,
-                    ast::Operator::Divide => lhs / rhs,
+                    ast::Operator::Divide => {
+                        if rhs == 0 {
+                            return Err(InterpreterError::ZeroDivision);
+                        }
+
+                        lhs / rhs
+                    }
                     ast::Operator::LessThan => {
                         if lhs < rhs {
                             1
@@ -182,6 +190,17 @@ mod tests {
         let mut interpreter = Interpreter::new();
         let expression = ast::divide(&ast::integer(200), &ast::integer(20));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 10);
+    }
+
+    #[test]
+    fn test_200_divided_by_0_is_error() {
+        let mut interpreter = Interpreter::new();
+        let expression = ast::divide(&ast::integer(200), &ast::integer(0));
+
+        match interpreter.interpret(&expression).unwrap_err() {
+            InterpreterError::ZeroDivision => {}
+            _ => unreachable!(),
+        }
     }
 
     #[test]
