@@ -25,6 +25,17 @@ struct Environment<T> {
     next: Option<Box<Environment<T>>>,
 }
 
+impl<T> Environment<T> {
+    fn find_binding(&self, name: &str) -> Option<&HashMap<String, T>> {
+        self.bindings.get(name).map(|_| &self.bindings).or_else(|| {
+            self.next
+                .as_deref()
+                .map(|env| env.find_binding(name))
+                .flatten()
+        })
+    }
+}
+
 #[derive(Clone)]
 pub struct Interpreter {
     variable_environment: Environment<i64>,
