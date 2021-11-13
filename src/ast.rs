@@ -79,9 +79,49 @@ pub fn divide(lhs: Expression, rhs: Expression) -> Expression {
     }
 }
 
-pub fn binary(operator: Operator, lhs: Expression, rhs: Expression) -> Expression {
+pub fn less_than(lhs: Expression, rhs: Expression) -> Expression {
     Expression::Binary {
-        operator,
+        operator: Operator::LessThan,
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    }
+}
+
+pub fn less_or_equal(lhs: Expression, rhs: Expression) -> Expression {
+    Expression::Binary {
+        operator: Operator::LessOrEqual,
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    }
+}
+
+pub fn greater_than(lhs: Expression, rhs: Expression) -> Expression {
+    Expression::Binary {
+        operator: Operator::GreaterThan,
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    }
+}
+
+pub fn greater_or_equal(lhs: Expression, rhs: Expression) -> Expression {
+    Expression::Binary {
+        operator: Operator::GreaterOrEqual,
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    }
+}
+
+pub fn equal_equal(lhs: Expression, rhs: Expression) -> Expression {
+    Expression::Binary {
+        operator: Operator::EqualEqual,
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    }
+}
+
+pub fn not_equal(lhs: Expression, rhs: Expression) -> Expression {
+    Expression::Binary {
+        operator: Operator::NotEqual,
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),
     }

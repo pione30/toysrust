@@ -293,7 +293,7 @@ mod tests {
     fn if_then() {
         let mut interpreter = Interpreter::new();
 
-        let condition = ast::binary(ast::Operator::LessThan, ast::integer(2), ast::integer(4));
+        let condition = ast::less_than(ast::integer(2), ast::integer(4));
 
         let expression = ast::ast_if(condition, ast::integer(42), None);
         assert_eq!(interpreter.interpret(&expression).unwrap(), 42);
@@ -303,7 +303,7 @@ mod tests {
     fn if_then_else() {
         let mut interpreter = Interpreter::new();
 
-        let condition = ast::binary(ast::Operator::GreaterThan, ast::integer(2), ast::integer(4));
+        let condition = ast::greater_than(ast::integer(2), ast::integer(4));
 
         let expression = ast::ast_if(condition, ast::integer(42), Some(ast::integer(53)));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 53);
@@ -337,11 +337,7 @@ mod tests {
                 "fact",
                 &["n"],
                 ast::block(vec![ast::ast_if(
-                    ast::binary(
-                        ast::Operator::LessThan,
-                        ast::identifier("n"),
-                        ast::integer(2),
-                    ),
+                    ast::less_than(ast::identifier("n"), ast::integer(2)),
                     ast::integer(1),
                     Some(ast::multiply(
                         ast::identifier("n"),
