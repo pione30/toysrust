@@ -3,6 +3,23 @@ use std::collections::HashMap;
 use crate::ast;
 use thiserror::Error;
 
+#[derive(Clone)]
+struct Environment<T> {
+    bindings: HashMap<String, T>,
+    next: Option<Box<Environment<T>>>,
+}
+
+impl<T> Environment<T> {
+    fn find_binding(&self, name: &str) -> Option<&HashMap<String, T>> {
+        self.bindings.get(name).map(|_| &self.bindings).or_else(|| {
+            self.next
+                .as_deref()
+                .map(|env| env.find_binding(name))
+                .flatten()
+        })
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum InterpreterError {
     #[error("This program doesn't have main() function")]
@@ -21,15 +38,21 @@ pub enum InterpreterError {
 
 #[derive(Clone)]
 pub struct Interpreter {
-    variable_environment: HashMap<String, i64>,
-    function_environment: HashMap<String, ast::Function>,
+    variable_environment: Environment<i64>,
+    function_environment: Environment<ast::Function>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            variable_environment: HashMap::new(),
-            function_environment: HashMap::new(),
+            variable_environment: Environment {
+                bindings: HashMap::new(),
+                next: None,
+            },
+            function_environment: Environment {
+                bindings: HashMap::new(),
+                next: None,
+            },
         }
     }
 
@@ -97,11 +120,15 @@ impl Interpreter {
             ast::Expression::IntegerLiteral { value } => *value,
             ast::Expression::Identifier { name } => *self
                 .variable_environment
-                .get(name)
+                .find_binding(name)
+                .map(|bindings| bindings.get(name))
+                .flatten()
                 .ok_or_else(|| InterpreterError::VariableNotPresent(name.clone()))?,
             ast::Expression::Assignment { name, expression } => {
                 let value = self.interpret(expression)?;
-                self.variable_environment.insert(name.clone(), value);
+                self.variable_environment
+                    .bindings
+                    .insert(name.clone(), value);
                 value
             }
             ast::Expression::Block { elements } => {
@@ -144,6 +171,7 @@ impl Interpreter {
 
                 let definition = backup_environments
                     .function_environment
+                    .bindings
                     .get(name)
                     .ok_or_else(|| InterpreterError::FunctionNotFound(name.clone()))?;
 
@@ -158,12 +186,14 @@ impl Interpreter {
                     let actual_value = self.interpret(actual_expression)?;
 
                     self.variable_environment
+                        .bindings
                         .insert(formal_param_name.clone(), actual_value);
                 }
                 let value = self.interpret(&definition.body)?;
 
                 // 呼び出し先から返ったら変数環境も元に戻す
-                self.variable_environment = backup_environments.variable_environment;
+                self.variable_environment.bindings =
+                    backup_environments.variable_environment.bindings;
 
                 value
             }
@@ -177,13 +207,19 @@ impl Interpreter {
             match top_level {
                 ast::TopLevel::FunctionDefinition(function) => {
                     self.function_environment
+                        .bindings
                         .insert(function.name.clone(), function);
+                }
+                ast::TopLevel::GlobalVariableDefinition { name, expression } => {
+                    let value = self.interpret(&expression)?;
+                    self.variable_environment.bindings.insert(name, value);
                 }
             }
         }
 
         let main = self
             .function_environment
+            .bindings
             .get("main")
             .cloned()
             .ok_or(InterpreterError::MainNotPresent)?;

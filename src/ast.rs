@@ -56,6 +56,10 @@ pub struct Function {
 
 pub enum TopLevel {
     FunctionDefinition(Function),
+    GlobalVariableDefinition {
+        name: String,
+        expression: Expression,
+    },
 }
 
 pub struct Program {
