@@ -235,35 +235,35 @@ mod tests {
     #[test]
     fn test_10_plus_20_is_30() {
         let mut interpreter = Interpreter::new();
-        let expression = ast::add(&ast::integer(10), &ast::integer(20));
+        let expression = ast::add(ast::integer(10), ast::integer(20));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 30);
     }
 
     #[test]
     fn test_30_minus_20_is_10() {
         let mut interpreter = Interpreter::new();
-        let expression = ast::subtract(&ast::integer(30), &ast::integer(20));
+        let expression = ast::subtract(ast::integer(30), ast::integer(20));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 10);
     }
 
     #[test]
     fn test_10_multiplies_20_is_200() {
         let mut interpreter = Interpreter::new();
-        let expression = ast::multiply(&ast::integer(10), &ast::integer(20));
+        let expression = ast::multiply(ast::integer(10), ast::integer(20));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 200);
     }
 
     #[test]
     fn test_200_divided_by_20_is_10() {
         let mut interpreter = Interpreter::new();
-        let expression = ast::divide(&ast::integer(200), &ast::integer(20));
+        let expression = ast::divide(ast::integer(200), ast::integer(20));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 10);
     }
 
     #[test]
     fn test_200_divided_by_0_is_error() {
         let mut interpreter = Interpreter::new();
-        let expression = ast::divide(&ast::integer(200), &ast::integer(0));
+        let expression = ast::divide(ast::integer(200), ast::integer(0));
 
         match interpreter.interpret(&expression).unwrap_err() {
             InterpreterError::ZeroDivision => {}
@@ -282,7 +282,7 @@ mod tests {
     fn assign_and_identify() {
         let mut interpreter = Interpreter::new();
 
-        let assignment = ast::assignment("foo", &ast::integer(42));
+        let assignment = ast::assignment("foo", ast::integer(42));
         assert_eq!(interpreter.interpret(&assignment).unwrap(), 42);
 
         let identifier = ast::identifier("foo");
@@ -293,9 +293,9 @@ mod tests {
     fn if_then() {
         let mut interpreter = Interpreter::new();
 
-        let condition = ast::binary(&ast::Operator::LessThan, &ast::integer(2), &ast::integer(4));
+        let condition = ast::binary(ast::Operator::LessThan, ast::integer(2), ast::integer(4));
 
-        let expression = ast::ast_if(&condition, &ast::integer(42), &None);
+        let expression = ast::ast_if(condition, ast::integer(42), None);
         assert_eq!(interpreter.interpret(&expression).unwrap(), 42);
     }
 
@@ -303,13 +303,9 @@ mod tests {
     fn if_then_else() {
         let mut interpreter = Interpreter::new();
 
-        let condition = ast::binary(
-            &ast::Operator::GreaterThan,
-            &ast::integer(2),
-            &ast::integer(4),
-        );
+        let condition = ast::binary(ast::Operator::GreaterThan, ast::integer(2), ast::integer(4));
 
-        let expression = ast::ast_if(&condition, &ast::integer(42), &Some(ast::integer(53)));
+        let expression = ast::ast_if(condition, ast::integer(42), Some(ast::integer(53)));
         assert_eq!(interpreter.interpret(&expression).unwrap(), 53);
     }
 
@@ -317,9 +313,52 @@ mod tests {
     fn block() {
         let mut interpreter = Interpreter::new();
 
-        let elements = [ast::integer(1), ast::integer(2), ast::integer(3)];
+        let elements = vec![ast::integer(1), ast::integer(2), ast::integer(3)];
 
-        let expression = ast::block(&elements);
+        let expression = ast::block(elements);
         assert_eq!(interpreter.interpret(&expression).unwrap(), 3);
+    }
+
+    #[test]
+    fn factorial() {
+        let top_levels = vec![
+            // define main() {
+            //     fact(5);
+            // }
+            ast::define_function("main", &[], ast::call("fact", vec![ast::integer(5)])),
+            // define factorial(n) {
+            //     if(n < 2) {
+            //         1;
+            //     } else {
+            //         n * fact(n - 1);
+            //     }
+            // }
+            ast::define_function(
+                "fact",
+                &["n"],
+                ast::block(vec![ast::ast_if(
+                    ast::binary(
+                        ast::Operator::LessThan,
+                        ast::identifier("n"),
+                        ast::integer(2),
+                    ),
+                    ast::integer(1),
+                    Some(ast::multiply(
+                        ast::identifier("n"),
+                        ast::call(
+                            "fact",
+                            vec![ast::subtract(ast::identifier("n"), ast::integer(1))],
+                        ),
+                    )),
+                )]),
+            ),
+        ];
+
+        let program = ast::Program {
+            definitions: top_levels,
+        };
+
+        let mut interpreter = Interpreter::new();
+        assert_eq!(interpreter.call_main(program).unwrap(), 120);
     }
 }
