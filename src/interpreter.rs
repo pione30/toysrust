@@ -3,22 +3,6 @@ use std::collections::HashMap;
 use crate::ast;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
-pub enum InterpreterError {
-    #[error("This program doesn't have main() function")]
-    MainNotPresent,
-    #[error("Zero is an invalid denominator")]
-    ZeroDivision,
-    #[error("Variable {0} is not present in this environment")]
-    VariableNotPresent(String),
-    #[error("`else_clause` should not be None when the `if` condition is not met")]
-    ElseClauseNoneUnderIfConditionNotMet,
-    #[error("An argument for `{0}` is not provided")]
-    NotEnoughArguments(String),
-    #[error("Function {0} is not found")]
-    FunctionNotFound(String),
-}
-
 #[derive(Clone)]
 struct Environment<T> {
     bindings: HashMap<String, T>,
@@ -34,6 +18,22 @@ impl<T> Environment<T> {
                 .flatten()
         })
     }
+}
+
+#[derive(Error, Debug)]
+pub enum InterpreterError {
+    #[error("This program doesn't have main() function")]
+    MainNotPresent,
+    #[error("Zero is an invalid denominator")]
+    ZeroDivision,
+    #[error("Variable {0} is not present in this environment")]
+    VariableNotPresent(String),
+    #[error("`else_clause` should not be None when the `if` condition is not met")]
+    ElseClauseNoneUnderIfConditionNotMet,
+    #[error("An argument for `{0}` is not provided")]
+    NotEnoughArguments(String),
+    #[error("Function {0} is not found")]
+    FunctionNotFound(String),
 }
 
 #[derive(Clone)]
