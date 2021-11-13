@@ -20,154 +20,173 @@ pub enum InterpreterError {
 }
 
 #[derive(Clone)]
+struct Environment<T> {
+    bindings: HashMap<String, T>,
+    next: Option<Box<Environment<T>>>,
+}
+
+#[derive(Clone)]
 pub struct Interpreter {
-    variable_environment: HashMap<String, i64>,
-    function_environment: HashMap<String, ast::Function>,
+    variable_environment: Environment<i64>,
+    function_environment: Environment<ast::Function>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            variable_environment: HashMap::new(),
-            function_environment: HashMap::new(),
+            variable_environment: Environment {
+                bindings: HashMap::new(),
+                next: None,
+            },
+            function_environment: Environment {
+                bindings: HashMap::new(),
+                next: None,
+            },
         }
     }
 
     pub fn interpret(&mut self, expression: &ast::Expression) -> Result<i64, InterpreterError> {
-        let value = match expression {
-            ast::Expression::Binary { operator, lhs, rhs } => {
-                let lhs = self.interpret(lhs)?;
-                let rhs = self.interpret(rhs)?;
+        let value =
+            match expression {
+                ast::Expression::Binary { operator, lhs, rhs } => {
+                    let lhs = self.interpret(lhs)?;
+                    let rhs = self.interpret(rhs)?;
 
-                match operator {
-                    ast::Operator::Add => lhs + rhs,
-                    ast::Operator::Subtract => lhs - rhs,
-                    ast::Operator::Multiply => lhs * rhs,
-                    ast::Operator::Divide => {
-                        if rhs == 0 {
-                            return Err(InterpreterError::ZeroDivision);
-                        }
+                    match operator {
+                        ast::Operator::Add => lhs + rhs,
+                        ast::Operator::Subtract => lhs - rhs,
+                        ast::Operator::Multiply => lhs * rhs,
+                        ast::Operator::Divide => {
+                            if rhs == 0 {
+                                return Err(InterpreterError::ZeroDivision);
+                            }
 
-                        lhs / rhs
-                    }
-                    ast::Operator::LessThan => {
-                        if lhs < rhs {
-                            1
-                        } else {
-                            0
+                            lhs / rhs
                         }
-                    }
-                    ast::Operator::LessOrEqual => {
-                        if lhs <= rhs {
-                            1
-                        } else {
-                            0
+                        ast::Operator::LessThan => {
+                            if lhs < rhs {
+                                1
+                            } else {
+                                0
+                            }
                         }
-                    }
-                    ast::Operator::GreaterThan => {
-                        if lhs > rhs {
-                            1
-                        } else {
-                            0
+                        ast::Operator::LessOrEqual => {
+                            if lhs <= rhs {
+                                1
+                            } else {
+                                0
+                            }
                         }
-                    }
-                    ast::Operator::GreaterOrEqual => {
-                        if lhs >= rhs {
-                            1
-                        } else {
-                            0
+                        ast::Operator::GreaterThan => {
+                            if lhs > rhs {
+                                1
+                            } else {
+                                0
+                            }
                         }
-                    }
-                    ast::Operator::EqualEqual => {
-                        if lhs == rhs {
-                            1
-                        } else {
-                            0
+                        ast::Operator::GreaterOrEqual => {
+                            if lhs >= rhs {
+                                1
+                            } else {
+                                0
+                            }
                         }
-                    }
-                    ast::Operator::NotEqual => {
-                        if lhs != rhs {
-                            1
-                        } else {
-                            0
+                        ast::Operator::EqualEqual => {
+                            if lhs == rhs {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                        ast::Operator::NotEqual => {
+                            if lhs != rhs {
+                                1
+                            } else {
+                                0
+                            }
                         }
                     }
                 }
-            }
-            ast::Expression::IntegerLiteral { value } => *value,
-            ast::Expression::Identifier { name } => *self
-                .variable_environment
-                .get(name)
-                .ok_or_else(|| InterpreterError::VariableNotPresent(name.clone()))?,
-            ast::Expression::Assignment { name, expression } => {
-                let value = self.interpret(expression)?;
-                self.variable_environment.insert(name.clone(), value);
-                value
-            }
-            ast::Expression::Block { elements } => {
-                let mut value = 0;
-                for element in elements {
-                    value = self.interpret(element)?;
+                ast::Expression::IntegerLiteral { value } => *value,
+                ast::Expression::Identifier { name } => *self
+                    .variable_environment
+                    .bindings
+                    .get(name)
+                    .ok_or_else(|| InterpreterError::VariableNotPresent(name.clone()))?,
+                ast::Expression::Assignment { name, expression } => {
+                    let value = self.interpret(expression)?;
+                    self.variable_environment
+                        .bindings
+                        .insert(name.clone(), value);
+                    value
                 }
-                value
-            }
-            ast::Expression::While { condition, body } => {
-                loop {
+                ast::Expression::Block { elements } => {
+                    let mut value = 0;
+                    for element in elements {
+                        value = self.interpret(element)?;
+                    }
+                    value
+                }
+                ast::Expression::While { condition, body } => {
+                    loop {
+                        let condition = self.interpret(condition)?;
+                        if condition != 0 {
+                            self.interpret(body)?;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    1
+                }
+                ast::Expression::If {
+                    condition,
+                    then_clause,
+                    else_clause,
+                } => {
                     let condition = self.interpret(condition)?;
                     if condition != 0 {
-                        self.interpret(body)?;
+                        self.interpret(then_clause)?
                     } else {
-                        break;
+                        let expression = else_clause
+                            .as_ref()
+                            .ok_or(InterpreterError::ElseClauseNoneUnderIfConditionNotMet)?;
+
+                        self.interpret(expression)?
                     }
                 }
+                ast::Expression::FunctionCall { name, args } => {
+                    let backup_environments = self.clone();
 
-                1
-            }
-            ast::Expression::If {
-                condition,
-                then_clause,
-                else_clause,
-            } => {
-                let condition = self.interpret(condition)?;
-                if condition != 0 {
-                    self.interpret(then_clause)?
-                } else {
-                    let expression = else_clause
-                        .as_ref()
-                        .ok_or(InterpreterError::ElseClauseNoneUnderIfConditionNotMet)?;
+                    let definition = backup_environments
+                        .function_environment
+                        .bindings
+                        .get(name)
+                        .ok_or_else(|| InterpreterError::FunctionNotFound(name.clone()))?;
 
-                    self.interpret(expression)?
+                    let mut args_iter = args.iter();
+
+                    // 関数呼び出し先では呼び出し元のローカル変数が見えないようにする
+                    for formal_param_name in &definition.args {
+                        let actual_expression = args_iter.next().ok_or_else(|| {
+                            InterpreterError::NotEnoughArguments(formal_param_name.clone())
+                        })?;
+
+                        let actual_value = self.interpret(actual_expression)?;
+
+                        self.variable_environment
+                            .bindings
+                            .insert(formal_param_name.clone(), actual_value);
+                    }
+                    let value = self.interpret(&definition.body)?;
+
+                    // 呼び出し先から返ったら変数環境も元に戻す
+                    self.variable_environment.bindings =
+                        backup_environments.variable_environment.bindings;
+
+                    value
                 }
-            }
-            ast::Expression::FunctionCall { name, args } => {
-                let backup_environments = self.clone();
-
-                let definition = backup_environments
-                    .function_environment
-                    .get(name)
-                    .ok_or_else(|| InterpreterError::FunctionNotFound(name.clone()))?;
-
-                let mut args_iter = args.iter();
-
-                // 関数呼び出し先では呼び出し元のローカル変数が見えないようにする
-                for formal_param_name in &definition.args {
-                    let actual_expression = args_iter.next().ok_or_else(|| {
-                        InterpreterError::NotEnoughArguments(formal_param_name.clone())
-                    })?;
-
-                    let actual_value = self.interpret(actual_expression)?;
-
-                    self.variable_environment
-                        .insert(formal_param_name.clone(), actual_value);
-                }
-                let value = self.interpret(&definition.body)?;
-
-                // 呼び出し先から返ったら変数環境も元に戻す
-                self.variable_environment = backup_environments.variable_environment;
-
-                value
-            }
-        };
+            };
 
         Ok(value)
     }
@@ -177,17 +196,19 @@ impl Interpreter {
             match top_level {
                 ast::TopLevel::FunctionDefinition(function) => {
                     self.function_environment
+                        .bindings
                         .insert(function.name.clone(), function);
                 }
                 ast::TopLevel::GlobalVariableDefinition { name, expression } => {
                     let value = self.interpret(&expression)?;
-                    self.variable_environment.insert(name, value);
+                    self.variable_environment.bindings.insert(name, value);
                 }
             }
         }
 
         let main = self
             .function_environment
+            .bindings
             .get("main")
             .cloned()
             .ok_or(InterpreterError::MainNotPresent)?;
