@@ -323,18 +323,18 @@ mod tests {
     fn factorial() {
         let top_levels = vec![
             // define main() {
-            //     fact(5);
+            //     factorial(5);
             // }
-            ast::define_function("main", &[], ast::call("fact", vec![ast::integer(5)])),
+            ast::define_function("main", &[], ast::call("factorial", vec![ast::integer(5)])),
             // define factorial(n) {
             //     if(n < 2) {
             //         1;
             //     } else {
-            //         n * fact(n - 1);
+            //         n * factorial(n - 1);
             //     }
             // }
             ast::define_function(
-                "fact",
+                "factorial",
                 &["n"],
                 ast::block(vec![ast::ast_if(
                     ast::less_than(ast::identifier("n"), ast::integer(2)),
@@ -342,7 +342,7 @@ mod tests {
                     Some(ast::multiply(
                         ast::identifier("n"),
                         ast::call(
-                            "fact",
+                            "factorial",
                             vec![ast::subtract(ast::identifier("n"), ast::integer(1))],
                         ),
                     )),
