@@ -179,6 +179,10 @@ impl Interpreter {
                     self.function_environment
                         .insert(function.name.clone(), function);
                 }
+                ast::TopLevel::GlobalVariableDefinition { name, expression } => {
+                    let value = self.interpret(&expression)?;
+                    self.variable_environment.insert(name, value);
+                }
             }
         }
 
