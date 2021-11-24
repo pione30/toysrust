@@ -45,6 +45,9 @@ pub enum Expression {
         name: String,
         args: Vec<Expression>,
     },
+    PrintLn {
+        expression: Box<Expression>,
+    },
 }
 
 pub fn add(lhs: Expression, rhs: Expression) -> Expression {
@@ -169,6 +172,12 @@ pub fn call(name: &str, args: Vec<Expression>) -> Expression {
     Expression::FunctionCall {
         name: name.to_string(),
         args,
+    }
+}
+
+pub fn ast_println(expression: Expression) -> Expression {
+    Expression::PrintLn {
+        expression: Box::new(expression),
     }
 }
 

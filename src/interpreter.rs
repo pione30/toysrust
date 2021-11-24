@@ -197,6 +197,11 @@ impl Interpreter {
 
                 value
             }
+            ast::Expression::PrintLn { expression } => {
+                println!("{}", self.interpret(expression)?);
+
+                1
+            }
         };
 
         Ok(value)
@@ -317,6 +322,18 @@ mod tests {
 
         let expression = ast::block(elements);
         assert_eq!(interpreter.interpret(&expression).unwrap(), 3);
+    }
+
+    #[test]
+    /// To diplay outputs from the test, pass --nocapture option to the test binaries:
+    /// cargo test println -- --nocapture
+    fn println() {
+        let mut interpreter = Interpreter::new();
+
+        let value = ast::integer(42);
+        let expression = ast::ast_println(value);
+
+        assert_eq!(interpreter.interpret(&expression).unwrap(), 1);
     }
 
     #[test]
