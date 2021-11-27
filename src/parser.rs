@@ -1,38 +1,136 @@
+use crate::ast;
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric1},
-    combinator::recognize,
-    multi::many0,
-    sequence::pair,
+    character::complete::multispace1,
+    multi::{fold_many0, separated_list0},
+    sequence::{pair, terminated},
     IResult,
 };
+
+mod helper_combinators;
+mod raw_res;
+
+/// expression_line <- expression ";";
+fn expression_line(input: &str) -> IResult<&str, ast::Expression> {
+    terminated(expression, tag(";"))(input)
+}
+
+/// expression <- comparative;
+fn expression(input: &str) -> IResult<&str, ast::Expression> {
+    comparative(input)
+}
+
+/// comparative <- additive (
+///     ("<" / ">" / "<=" / ">=" / "==" / "!=") additive
+/// )*;
+fn comparative(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, left_operand) = additive(input)?;
+
+    let result = fold_many0(
+        pair(
+            helper_combinators::ws(alt((
+                tag("<"),
+                tag(">"),
+                tag("<="),
+                tag(">="),
+                tag("=="),
+                tag("!="),
+            ))),
+            additive,
+        ),
+        || left_operand.clone(),
+        |acc, (operator, right_operand)| match operator {
+            "<" => ast::less_than(acc, right_operand),
+            ">" => ast::greater_than(acc, right_operand),
+            "<=" => ast::less_or_equal(acc, right_operand),
+            ">=" => ast::greater_or_equal(acc, right_operand),
+            "==" => ast::equal_equal(acc, right_operand),
+            "!=" => ast::not_equal(acc, right_operand),
+            _ => unreachable!(),
+        },
+    )(input);
+
+    result
+}
+
+/// additive <- multitive (
+///     ("+" / "-") multitive
+/// )*;
+fn additive(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, left_operand) = multitive(input)?;
+
+    let result = fold_many0(
+        pair(helper_combinators::ws(alt((tag("+"), tag("-")))), multitive),
+        || left_operand.clone(),
+        |acc, (operator, right_operand)| match operator {
+            "+" => ast::add(acc, right_operand),
+            "-" => ast::subtract(acc, right_operand),
+            _ => unreachable!(),
+        },
+    )(input);
+
+    result
+}
+
+/// multitive <- primary (
+///     ("*" / "/") primary
+/// )*;
+fn multitive(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, left_operand) = primary(input)?;
+
+    let result = fold_many0(
+        pair(helper_combinators::ws(alt((tag("*"), tag("/")))), primary),
+        || left_operand.clone(),
+        |acc, (operator, right_operand)| match operator {
+            "*" => ast::multiply(acc, right_operand),
+            "/" => ast::divide(acc, right_operand),
+            _ => unreachable!(),
+        },
+    )(input);
+
+    result
+}
+
+/// primary <- "(" expression ")"
+///     / integer
+///     / function_call
+///     / identifier
+fn primary(input: &str) -> IResult<&str, ast::Expression> {
+    alt((
+        helper_combinators::parentheses(expression),
+        integer,
+        function_call,
+        identifier,
+    ))(input)
+}
+
+/// integer <- i64
+fn integer(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, value) = raw_res::integer(input)?;
+
+    Ok((input, ast::integer(value)))
+}
+
+/// function_call <- identifier "("
+///     (expression ("," expression)*)?
+/// ")"
+fn function_call(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, name) = terminated(raw_res::identifier, multispace1)(input)?;
+
+    let (input, args) = helper_combinators::parentheses(separated_list0(
+        helper_combinators::ws(tag(",")),
+        expression,
+    ))(input)?;
+
+    Ok((input, ast::call(name, args)))
+}
 
 /// identifier <- (alpha / "_")+ (
 ///     alphanumeric / "_"
 /// )*;
-fn identifier(input: &str) -> IResult<&str, &str> {
-    recognize(pair(
-        alt((alpha1, tag("_"))),
-        many0(alt((alphanumeric1, tag("_")))),
-    ))(input)
-}
+fn identifier(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, name) = raw_res::identifier(input)?;
 
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn identifier_test() {
-        assert_eq!(identifier("foo"), Ok(("", "foo")));
-        assert_eq!(identifier("_foo"), Ok(("", "_foo")));
-        assert_eq!(identifier("foo42_hello"), Ok(("", "foo42_hello")));
-        assert_eq!(
-            identifier("42foo"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "42foo",
-                nom::error::ErrorKind::Tag
-            )))
-        );
-    }
+    Ok((input, ast::identifier(name)))
 }
