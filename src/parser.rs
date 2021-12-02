@@ -3,8 +3,9 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::multispace1,
+    combinator::opt,
     multi::{fold_many0, many0, separated_list0},
-    sequence::{pair, preceded, terminated},
+    sequence::{delimited, pair, preceded, terminated},
     IResult,
 };
 
@@ -29,16 +30,41 @@ fn line(input: &str) -> IResult<&str, ast::Expression> {
     ))(input)
 }
 
+/// println <- "println" "(" expression ")";
 fn println(input: &str) -> IResult<&str, ast::Expression> {
-    unimplemented!();
+    let (input, _) = tag("println")(input)?;
+    let (input, _) = multispace1(input)?;
+    let (input, expression) = helper_combinators::parentheses(expression)(input)?;
+
+    Ok((input, ast::ast_println(expression)))
 }
 
+/// if_expression <-
+///     "if" "(" expression ")" line
+///     ("else" line)?;
 fn if_expression(input: &str) -> IResult<&str, ast::Expression> {
-    unimplemented!();
+    let (input, _) = tag("if")(input)?;
+    let (input, _) = multispace1(input)?;
+    let (input, condition) = helper_combinators::parentheses(expression)(input)?;
+    let (input, then_clause) = preceded(multispace1, line)(input)?;
+
+    let (input, else_clause) = opt(preceded(
+        delimited(multispace1, tag("else"), multispace1),
+        line,
+    ))(input)?;
+
+    Ok((input, ast::ast_if(condition, then_clause, else_clause)))
 }
 
+/// while_expression <-
+///     "while" "(" expression ")" line;
 fn while_expression(input: &str) -> IResult<&str, ast::Expression> {
-    unimplemented!();
+    let (input, _) = tag("while")(input)?;
+    let (input, _) = multispace1(input)?;
+    let (input, condition) = helper_combinators::parentheses(expression)(input)?;
+    let (input, body) = preceded(multispace1, line)(input)?;
+
+    Ok((input, ast::ast_while(condition, body)))
 }
 
 /// block_expression <- "{" line* "}";
