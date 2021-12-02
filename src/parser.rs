@@ -4,12 +4,22 @@ use nom::{
     bytes::complete::tag,
     character::complete::multispace1,
     multi::{fold_many0, separated_list0},
-    sequence::{pair, terminated},
+    sequence::{pair, preceded, terminated},
     IResult,
 };
 
 mod helper_combinators;
 mod raw_res;
+
+/// assignment <- identifier "=" expression ";";
+fn assignment(input: &str) -> IResult<&str, ast::Expression> {
+    let (input, name) = raw_res::identifier(input)?;
+    let (input, _) = helper_combinators::ws(tag("="))(input)?;
+    let (input, ast_expression) = expression(input)?;
+    let (input, _) = preceded(multispace1, tag(";"))(input)?;
+
+    Ok((input, ast::assignment(name, ast_expression)))
+}
 
 /// expression_line <- expression ";";
 fn expression_line(input: &str) -> IResult<&str, ast::Expression> {
