@@ -24,3 +24,14 @@ where
 {
     delimited(tag("("), ws(inner), tag(")"))
 }
+
+/// A combinator that takes a parser `inner` and produces a parser that also consumes both leading "{" and
+/// trailing "}", returning the output of `inner`.
+pub fn curly_brackets<'a, F: 'a, O, E: nom::error::ParseError<&'a str>>(
+    inner: F,
+) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+where
+    F: FnMut(&'a str) -> IResult<&'a str, O, E>,
+{
+    delimited(tag("{"), ws(inner), tag("}"))
+}

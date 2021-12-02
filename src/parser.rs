@@ -3,7 +3,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::multispace1,
-    multi::{fold_many0, separated_list0},
+    multi::{fold_many0, many0, separated_list0},
     sequence::{pair, preceded, terminated},
     IResult,
 };
@@ -41,8 +41,11 @@ fn while_expression(input: &str) -> IResult<&str, ast::Expression> {
     unimplemented!();
 }
 
+/// block_expression <- "{" line* "}";
 fn block_expression(input: &str) -> IResult<&str, ast::Expression> {
-    unimplemented!();
+    let (input, elements) = helper_combinators::curly_brackets(many0(line))(input)?;
+
+    Ok((input, ast::block(elements)))
 }
 
 /// assignment <- identifier "=" expression ";";
