@@ -11,6 +11,40 @@ use nom::{
 mod helper_combinators;
 mod raw_res;
 
+/// line <-
+///     println \
+///     if_expression \
+///     while_expression \
+///     block_expression
+///     assignment \
+///     expression_line;
+fn line(input: &str) -> IResult<&str, ast::Expression> {
+    alt((
+        println,
+        if_expression,
+        while_expression,
+        block_expression,
+        assignment,
+        expression_line,
+    ))(input)
+}
+
+fn println(input: &str) -> IResult<&str, ast::Expression> {
+    unimplemented!();
+}
+
+fn if_expression(input: &str) -> IResult<&str, ast::Expression> {
+    unimplemented!();
+}
+
+fn while_expression(input: &str) -> IResult<&str, ast::Expression> {
+    unimplemented!();
+}
+
+fn block_expression(input: &str) -> IResult<&str, ast::Expression> {
+    unimplemented!();
+}
+
 /// assignment <- identifier "=" expression ";";
 fn assignment(input: &str) -> IResult<&str, ast::Expression> {
     let (input, name) = raw_res::identifier(input)?;
