@@ -204,6 +204,13 @@ pub fn define_function(name: &str, args: &[&str], body: Expression) -> TopLevel 
     })
 }
 
+pub fn difine_global_variable(name: &str, expression: Expression) -> TopLevel {
+    TopLevel::GlobalVariableDefinition {
+        name: name.to_string(),
+        expression,
+    }
+}
+
 pub struct Program {
     pub definitions: Vec<TopLevel>,
 }

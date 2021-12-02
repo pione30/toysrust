@@ -2,7 +2,7 @@ use crate::ast;
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::multispace1,
+    character::complete::{multispace0, multispace1},
     combinator::opt,
     multi::{fold_many0, many0, separated_list0},
     sequence::{delimited, pair, preceded, terminated},
@@ -11,6 +11,47 @@ use nom::{
 
 mod helper_combinators;
 mod raw_res;
+
+/// top_level_definition <-
+///     function_definition \
+///     global_variable_definition;
+fn top_level_definition(input: &str) -> IResult<&str, ast::TopLevel> {
+    alt((function_definition, global_variable_definition))(input)
+}
+
+/// function_definition <-
+///     "define" identifier
+///     "(" (identifier ("," identifier)*)? ")"
+///     block_expression
+fn function_definition(input: &str) -> IResult<&str, ast::TopLevel> {
+    let (input, _) = tag("define")(input)?;
+    let (input, _) = multispace1(input)?;
+
+    let (input, name) = raw_res::identifier(input)?;
+    let (input, _) = multispace0(input)?;
+
+    let (input, args) = helper_combinators::parentheses(separated_list0(
+        delimited(multispace0, tag(","), multispace0),
+        raw_res::identifier,
+    ))(input)?;
+    let (input, _) = multispace0(input)?;
+
+    let (input, body) = block_expression(input)?;
+
+    Ok((input, ast::define_function(name, &args, body)))
+}
+
+/// global_variable_definition <-
+///     "global" identifier "=" expression;
+fn global_variable_definition(input: &str) -> IResult<&str, ast::TopLevel> {
+    let (input, _) = tag("global")(input)?;
+    let (input, _) = multispace1(input)?;
+    let (input, name) = raw_res::identifier(input)?;
+    let (input, _) = helper_combinators::ws(tag("="))(input)?;
+    let (input, expression) = expression(input)?;
+
+    Ok((input, ast::difine_global_variable(name, expression)))
+}
 
 /// line <-
 ///     println \
