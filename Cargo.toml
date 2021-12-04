@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 thiserror = "1.0.30"
+nom = "7.1.0"
