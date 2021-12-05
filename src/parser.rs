@@ -255,3 +255,207 @@ fn identifier(input: &str) -> IResult<&str, ast::Expression> {
 
     Ok((input, ast::identifier(name)))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::interpreter::Interpreter;
+
+    #[test]
+    fn interger_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42";
+        let (_, expression) = integer(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn multitive_left_operand_only() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42";
+        let (_, expression) = multitive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn multitive_multiply() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "21 * 2";
+        let (_, expression) = multitive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn multitive_divide() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 / 2";
+        let (_, expression) = multitive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 21);
+    }
+
+    #[test]
+    fn multitive_second_right_operand_followed() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "2 * 3 * (4 + 5)";
+        let (_, expression) = multitive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 54);
+    }
+
+    #[test]
+    fn additive_left_operand_only() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42";
+        let (_, expression) = additive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn additive_add() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "2 + 2";
+        let (_, expression) = additive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 4);
+    }
+
+    #[test]
+    fn additive_subtract() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 - 2";
+        let (_, expression) = additive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 40);
+    }
+
+    #[test]
+    fn additive_second_right_operand_followed() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "2 + 3 + (4 - 5)";
+        let (_, expression) = additive(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 4);
+    }
+
+    #[test]
+    fn comparative_left_operand_only() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn comparative_less_than() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 < 53";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn comparative_greater_than() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 > 53";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 0);
+    }
+
+    #[test]
+    fn comparative_less_or_equal() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 <= 42";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn comparative_greater_or_equal() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 >= 42";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn comparative_equal_equal() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 == 42";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn comparative_not_equal() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "42 != 42";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 0);
+    }
+
+    #[test]
+    fn comparative_second_right_operand_followed() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "(1 < 2) == (3 < 4)";
+        let (_, expression) = comparative(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn expression_line_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "2 + 2;";
+        let (_, expression) = expression_line(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 4);
+    }
+}
