@@ -151,23 +151,23 @@ fn comparative(input: &str) -> IResult<&str, ast::Expression> {
     let result = fold_many0(
         pair(
             helper_combinators::ws(alt((
-                tag("<"),
-                tag(">"),
                 tag("<="),
                 tag(">="),
                 tag("=="),
                 tag("!="),
+                tag("<"),
+                tag(">"),
             ))),
             additive,
         ),
         || left_operand.clone(),
         |acc, (operator, right_operand)| match operator {
-            "<" => ast::less_than(acc, right_operand),
-            ">" => ast::greater_than(acc, right_operand),
             "<=" => ast::less_or_equal(acc, right_operand),
             ">=" => ast::greater_or_equal(acc, right_operand),
             "==" => ast::equal_equal(acc, right_operand),
             "!=" => ast::not_equal(acc, right_operand),
+            "<" => ast::less_than(acc, right_operand),
+            ">" => ast::greater_than(acc, right_operand),
             _ => unreachable!(),
         },
     )(input);
