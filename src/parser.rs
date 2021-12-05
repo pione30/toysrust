@@ -127,7 +127,7 @@ fn assignment(input: &str) -> IResult<&str, ast::Expression> {
     let (input, name) = raw_res::identifier(input)?;
     let (input, _) = helper_combinators::ws(tag("="))(input)?;
     let (input, ast_expression) = expression(input)?;
-    let (input, _) = preceded(multispace1, tag(";"))(input)?;
+    let (input, _) = preceded(multispace0, tag(";"))(input)?;
 
     Ok((input, ast::assignment(name, ast_expression)))
 }
@@ -457,5 +457,23 @@ mod tests {
         let value = interpreter.interpret(&expression).unwrap();
 
         assert_eq!(value, 4);
+    }
+
+    #[test]
+    fn assign_and_identify() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "answer = 42;";
+        let (_, expression) = assignment(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+
+        let input = "answer";
+
+        let (_, expression) = identifier(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
     }
 }
