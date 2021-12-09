@@ -13,7 +13,7 @@ mod helper_combinators;
 mod raw_res;
 
 /// program <- top_level_definition*;
-fn program(input: &str) -> IResult<&str, ast::Program> {
+pub fn program(input: &str) -> IResult<&str, ast::Program> {
     let (input, definitions) = many0(helper_combinators::ws(top_level_definition))(input)?;
 
     Ok((input, ast::Program { definitions }))
