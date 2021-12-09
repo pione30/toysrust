@@ -557,4 +557,46 @@ mod tests {
 
         assert_eq!(value, 1);
     }
+
+    #[test]
+    fn global_variable_definition_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "
+            global answer = 42;
+
+            define main() {
+                answer;
+            }
+        ";
+
+        let (_, ast_program) = program(input).unwrap();
+        let value = interpreter.call_main(ast_program).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn factorial_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "
+            define factorial(n) {
+                if(n < 2) {
+                    1;
+                } else {
+                    n * factorial(n - 1);
+                }
+            }
+
+            define main() {
+                factorial(5);
+            }
+        ";
+
+        let (_, ast_program) = program(input).unwrap();
+        let value = interpreter.call_main(ast_program).unwrap();
+
+        assert_eq!(value, 120);
+    }
 }
