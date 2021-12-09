@@ -35,3 +35,67 @@ where
 {
     delimited(tag("{"), ws(inner), tag("}"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nom::bytes::complete::tag;
+
+    #[test]
+    fn ws_mulitspace0_test() {
+        let input = "hello";
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(ws(hello)(input), Ok(("", "hello")));
+    }
+
+    #[test]
+    fn ws_mulitspace1_test() {
+        let input = "
+            hello   world";
+
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(ws(hello)(input), Ok(("world", "hello")));
+    }
+
+    #[test]
+    fn parantheses_multispace0_test() {
+        let input = "(hello)";
+
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(parentheses(hello)(input), Ok(("", "hello")));
+    }
+
+    #[test]
+    fn parantheses_multispace1_test() {
+        let input = "(
+            hello
+        )";
+
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(parentheses(hello)(input), Ok(("", "hello")));
+    }
+
+    #[test]
+    fn curly_brackets_multispaces0_test() {
+        let input = "{hello}";
+
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(curly_brackets(hello)(input), Ok(("", "hello")));
+    }
+
+    #[test]
+    fn curly_brackets_multispace1_test() {
+        let input = "{
+            hello
+        }";
+
+        let hello = tag::<&str, &str, nom::error::Error<&str>>("hello");
+
+        assert_eq!(curly_brackets(hello)(input), Ok(("", "hello")));
+    }
+}
