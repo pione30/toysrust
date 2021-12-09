@@ -42,6 +42,12 @@ pub struct Interpreter {
     function_environment: Environment<ast::Function>,
 }
 
+impl Default for Interpreter {
+    fn default() -> Self {
+        Interpreter::new()
+    }
+}
+
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
