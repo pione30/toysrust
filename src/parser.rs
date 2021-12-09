@@ -85,9 +85,9 @@ fn line(input: &str) -> IResult<&str, ast::Expression> {
 /// println <- "println" "(" expression ")";
 fn println(input: &str) -> IResult<&str, ast::Expression> {
     let (input, _) = terminated(tag("println"), multispace0)(input)?;
-    let (input, expression) = helper_combinators::parentheses(expression)(input)?;
+    let (input, ast_expression) = helper_combinators::parentheses(expression)(input)?;
 
-    Ok((input, ast::ast_println(expression)))
+    Ok((input, ast::ast_println(ast_expression)))
 }
 
 /// if_expression <-
