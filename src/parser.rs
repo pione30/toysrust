@@ -49,15 +49,15 @@ fn function_definition(input: &str) -> IResult<&str, ast::TopLevel> {
 }
 
 /// global_variable_definition <-
-///     "global" identifier "=" expression;
+///     "global" identifier "=" expression ";";
 fn global_variable_definition(input: &str) -> IResult<&str, ast::TopLevel> {
     let (input, _) = tag("global")(input)?;
     let (input, _) = multispace1(input)?;
     let (input, name) = raw_res::identifier(input)?;
     let (input, _) = helper_combinators::ws(tag("="))(input)?;
-    let (input, expression) = expression(input)?;
+    let (input, ast_expression) = terminated(expression, tag(";"))(input)?;
 
-    Ok((input, ast::difine_global_variable(name, expression)))
+    Ok((input, ast::difine_global_variable(name, ast_expression)))
 }
 
 /// line <-
