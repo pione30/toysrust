@@ -35,13 +35,11 @@ fn function_definition(input: &str) -> IResult<&str, ast::TopLevel> {
     let (input, _) = multispace1(input)?;
 
     let (input, name) = raw_res::identifier(input)?;
-    let (input, _) = multispace0(input)?;
 
-    let (input, args) = helper_combinators::parentheses(separated_list0(
+    let (input, args) = helper_combinators::ws(helper_combinators::parentheses(separated_list0(
         delimited(multispace0, tag(","), multispace0),
         raw_res::identifier,
-    ))(input)?;
-    let (input, _) = multispace0(input)?;
+    )))(input)?;
 
     let (input, body) = block_expression(input)?;
 
