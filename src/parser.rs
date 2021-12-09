@@ -80,8 +80,7 @@ fn line(input: &str) -> IResult<&str, ast::Expression> {
 
 /// println <- "println" "(" expression ")";
 fn println(input: &str) -> IResult<&str, ast::Expression> {
-    let (input, _) = tag("println")(input)?;
-    let (input, _) = multispace1(input)?;
+    let (input, _) = terminated(tag("println"), multispace0)(input)?;
     let (input, expression) = helper_combinators::parentheses(expression)(input)?;
 
     Ok((input, ast::ast_println(expression)))
@@ -91,15 +90,11 @@ fn println(input: &str) -> IResult<&str, ast::Expression> {
 ///     "if" "(" expression ")" line
 ///     ("else" line)?;
 fn if_expression(input: &str) -> IResult<&str, ast::Expression> {
-    let (input, _) = tag("if")(input)?;
-    let (input, _) = multispace1(input)?;
+    let (input, _) = terminated(tag("if"), multispace0)(input)?;
     let (input, condition) = helper_combinators::parentheses(expression)(input)?;
-    let (input, then_clause) = preceded(multispace1, line)(input)?;
+    let (input, then_clause) = preceded(multispace0, line)(input)?;
 
-    let (input, else_clause) = opt(preceded(
-        delimited(multispace1, tag("else"), multispace1),
-        line,
-    ))(input)?;
+    let (input, else_clause) = opt(preceded(helper_combinators::ws(tag("else")), line))(input)?;
 
     Ok((input, ast::ast_if(condition, then_clause, else_clause)))
 }
@@ -107,10 +102,9 @@ fn if_expression(input: &str) -> IResult<&str, ast::Expression> {
 /// while_expression <-
 ///     "while" "(" expression ")" line;
 fn while_expression(input: &str) -> IResult<&str, ast::Expression> {
-    let (input, _) = tag("while")(input)?;
-    let (input, _) = multispace1(input)?;
+    let (input, _) = terminated(tag("while"), multispace0)(input)?;
     let (input, condition) = helper_combinators::parentheses(expression)(input)?;
-    let (input, body) = preceded(multispace1, line)(input)?;
+    let (input, body) = preceded(multispace0, line)(input)?;
 
     Ok((input, ast::ast_while(condition, body)))
 }
@@ -236,7 +230,7 @@ fn integer(input: &str) -> IResult<&str, ast::Expression> {
 ///     (expression ("," expression)*)?
 /// ")"
 fn function_call(input: &str) -> IResult<&str, ast::Expression> {
-    let (input, name) = terminated(raw_res::identifier, multispace1)(input)?;
+    let (input, name) = terminated(raw_res::identifier, multispace0)(input)?;
 
     let (input, args) = helper_combinators::parentheses(separated_list0(
         helper_combinators::ws(tag(",")),
