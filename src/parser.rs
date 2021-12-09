@@ -473,4 +473,90 @@ mod tests {
 
         assert_eq!(value, 42);
     }
+
+    #[test]
+    fn block_expression_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "{
+            answer = 42;
+
+            2 + 2 == 4;
+
+            answer;
+        }";
+
+        let (_, expression) = block_expression(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn while_expression_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "answer = 0;";
+        let (_, expression) = assignment(input).unwrap();
+        let _ = interpreter.interpret(&expression).unwrap();
+
+        let input = "i = 1;";
+        let (_, expression) = assignment(input).unwrap();
+        let _ = interpreter.interpret(&expression).unwrap();
+
+        let input = "while (i <= 5) {
+            answer = answer + i;
+            i = i + 1;
+        }";
+
+        let (_, expression) = while_expression(input).unwrap();
+        let _ = interpreter.interpret(&expression).unwrap();
+
+        let input = "answer;";
+        let (_, expression) = expression_line(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 15);
+    }
+
+    #[test]
+    fn if_expression_only_then_clause() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "if (2 + 2 == 4) {
+            42;
+        }";
+
+        let (_, expression) = if_expression(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn if_expression_else_clause() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "if (2 + 2 != 4) {
+            42;
+        } else {
+            21;
+        }";
+
+        let (_, expression) = if_expression(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 21);
+    }
+
+    #[test]
+    fn println_test() {
+        let mut interpreter = Interpreter::new();
+
+        let input = "println(42)";
+        let (_, expression) = println(input).unwrap();
+        let value = interpreter.interpret(&expression).unwrap();
+
+        assert_eq!(value, 1);
+    }
 }
