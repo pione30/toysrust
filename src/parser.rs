@@ -14,7 +14,7 @@ mod raw_res;
 
 /// program <- top_level_definition*;
 fn program(input: &str) -> IResult<&str, ast::Program> {
-    let (input, definitions) = many0(top_level_definition)(input)?;
+    let (input, definitions) = many0(helper_combinators::ws(top_level_definition))(input)?;
 
     Ok((input, ast::Program { definitions }))
 }
