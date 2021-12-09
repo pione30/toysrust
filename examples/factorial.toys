@@ -1,0 +1,12 @@
+define factorial(n) {
+  if(n < 2) {
+    1;
+  } else {
+    n * factorial(n - 1);
+  }
+}
+
+define main() {
+  res = factorial(5);
+  println(res)
+}
