@@ -126,8 +126,7 @@ fn block_expression(input: &str) -> IResult<&str, ast::Expression> {
 fn assignment(input: &str) -> IResult<&str, ast::Expression> {
     let (input, name) = raw_res::identifier(input)?;
     let (input, _) = helper_combinators::ws(tag("="))(input)?;
-    let (input, ast_expression) = expression(input)?;
-    let (input, _) = preceded(multispace0, tag(";"))(input)?;
+    let (input, ast_expression) = terminated(expression, tag(";"))(input)?;
 
     Ok((input, ast::assignment(name, ast_expression)))
 }
