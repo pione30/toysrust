@@ -68,14 +68,18 @@ fn global_variable_definition(input: &str) -> IResult<&str, ast::TopLevel> {
 ///     assignment \
 ///     expression_line;
 fn line(input: &str) -> IResult<&str, ast::Expression> {
-    alt((
-        println,
-        if_expression,
-        while_expression,
-        block_expression,
-        assignment,
-        expression_line,
-    ))(input)
+    // *terminated multispace0* is important!
+    terminated(
+        alt((
+            println,
+            if_expression,
+            while_expression,
+            block_expression,
+            assignment,
+            expression_line,
+        )),
+        multispace0,
+    )(input)
 }
 
 /// println <- "println" "(" expression ")";
