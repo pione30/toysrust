@@ -80,10 +80,11 @@ fn line(input: &str) -> IResult<&str, ast::Expression> {
     )(input)
 }
 
-/// println <- "println" "(" expression ")";
+/// println <- "println" "(" expression ")" ";";
 fn println(input: &str) -> IResult<&str, ast::Expression> {
     let (input, _) = terminated(tag("println"), multispace0)(input)?;
-    let (input, ast_expression) = helper_combinators::parentheses(expression)(input)?;
+    let (input, ast_expression) =
+        terminated(helper_combinators::parentheses(expression), tag(";"))(input)?;
 
     Ok((input, ast::ast_println(ast_expression)))
 }
@@ -551,7 +552,7 @@ mod tests {
     fn println_test() {
         let mut interpreter = Interpreter::new();
 
-        let input = "println(42)";
+        let input = "println(42);";
         let (_, expression) = println(input).unwrap();
         let value = interpreter.interpret(&expression).unwrap();
 
