@@ -8,5 +8,5 @@ define factorial(n) {
 
 define main() {
   res = factorial(5);
-  println(res)
+  println(res);
 }
